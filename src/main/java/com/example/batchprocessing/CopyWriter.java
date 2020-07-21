@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,12 +32,58 @@ public class CopyWriter<T> implements ItemWriter<T>,InitializingBean {
 	public void write(final List<? extends T> items) throws Exception {
         logger.info("##########Copy Writer");
         mergefiles(this.file_target,this.input_folder);
-		long rowsInserted = cm
-					.copyIn("COPY people FROM STDIN (FORMAT csv)", 
-						new BufferedReader(new FileReader(file_target))
-						);
-		System.out.printf("%d row(s) inserted%n", rowsInserted);
-    }
+		// long rowsInserted = cm
+		// 			.copyIn("COPY people FROM STDIN (FORMAT csv)", 
+		// 				new BufferedReader(new FileReader(file_target))
+		// 				);
+		// System.out.printf("%d row(s) inserted%n", rowsInserted);
+		runShell();
+
+
+	}
+	
+	private void runShell(){
+		try {
+
+			ProcessBuilder processBuilder = new ProcessBuilder();
+
+			String commandlie="PGPASSWORD=abcd1234 /usr/local/bin/psql -d postgres -U wang -c \"\\copy people(first_name,last_name) from /tmp/temp-output.csv delimiter ',' csv;\"";
+	
+			System.out.printf("command line: %s", commandlie);
+			processBuilder.redirectErrorStream(true);
+
+			processBuilder.command("bash", "-c", commandlie);
+			Process process = processBuilder.start();
+	
+			StringBuilder output = new StringBuilder();
+	
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(process.getInputStream()));
+	
+			String line;
+			while ((line = reader.readLine()) != null) {
+				output.append(line + "\n");
+			}
+	
+			int exitVal = process.waitFor();
+			if (exitVal == 0) {
+				System.out.println("Success!");
+				System.out.println(output);
+				System.exit(0);
+			} else {
+				System.out.println("Error!");
+				System.out.println(output);
+				System.exit(0);
+				//abnormal...
+			}
+	
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+	}
 
     @Override
 	public void afterPropertiesSet() {
