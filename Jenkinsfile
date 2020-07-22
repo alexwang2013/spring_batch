@@ -1,14 +1,9 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.3-jdk-8'
-            label 'docker'
-        }
-    }
+    agent any 
     stages {
-        stage('build') {
+        stage('Stage 1') {
             steps {
-                sh 'mvn --version'
+                echo 'Hello world!' 
             }
         }
     }
