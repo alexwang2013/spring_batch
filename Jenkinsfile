@@ -1,9 +1,14 @@
 pipeline {
-    agent any 
+    agent {
+        docker {
+            image 'maven'
+            args '-v /root/.m2:/root/.m2'
+        }
+    }
     stages {
-        stage('Stage 1') {
+        stage('Build') {
             steps {
-                echo 'Hello world!' 
+                sh 'mvn -B -DskipTests clean package'
             }
         }
     }
